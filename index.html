@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Split — shared subscriptions, settled cleanly</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,300;0,400;0,500;1,400&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+      window.SPLIT_SUPABASE_CONFIG = {
+        url: "",
+        anonKey: "",
+      };
+    </script>
+  </head>
+  <body>
+    <header class="nav">
+      <a class="wordmark" href="#home">Split</a>
+      <nav class="nav-links">
+        <a href="#library">Library</a>
+        <a href="#house">Household</a>
+        <a href="#ledger">Ledger</a>
+      </nav>
+      <div class="nav-actions">
+        <span class="auth-identity" data-auth-identity hidden></span>
+        <button class="btn btn-ghost" type="button" data-open-auth="login">
+          Log in
+        </button>
+        <button class="btn btn-ink" type="button" data-open-auth="signup">
+          Sign up
+        </button>
+        <button class="btn btn-ghost" type="button" data-sign-out hidden>
+          Log out
+        </button>
+      </div>
+    </header>
+
+    <main id="home">
+      <section class="hero">
+        <img
+          class="hero-photo"
+          src="https://images.unsplash.com/photo-1600210492493-0946911123ea?auto=format&fit=crop&w=2400&q=80"
+          alt="Warm living room with brown leather and evening light"
+        />
+        <div class="hero-veil"></div>
+        <div class="hero-copy">
+          <p class="kicker">Household · 2026</p>
+          <h1>Shared subscriptions, split with editorial precision.</h1>
+          <p class="lede">
+            Click a photograph. Name who is in. The ledger does the rest.
+          </p>
+        </div>
+      </section>
+
+      <section class="band band-white" id="library">
+        <div class="band-intro">
+          <p class="kicker ink">Library</p>
+          <h2>Each service is a photograph you can open.</h2>
+        </div>
+        <div class="photo-grid" id="photo-grid"></div>
+      </section>
+
+      <section class="band band-tan" id="house">
+        <div class="band-intro">
+          <p class="kicker">Household</p>
+          <h2>The people who actually pay.</h2>
+        </div>
+        <div class="house-layout">
+          <ul class="people" id="people-list"></ul>
+          <form class="add-person" id="add-person">
+            <label>
+              Add someone
+              <input name="name" type="text" placeholder="Name" required />
+            </label>
+            <button class="btn btn-ink" type="submit">Add</button>
+          </form>
+        </div>
+      </section>
+
+      <section class="band band-ink" id="ledger">
+        <div class="band-intro">
+          <p class="kicker on-dark">Ledger</p>
+          <h2>Who owes whom this month.</h2>
+        </div>
+        <div class="ledger" id="ledger-list"></div>
+      </section>
+    </main>
+
+    <section class="detail" id="detail" hidden>
+      <button class="back" data-close-detail>← Library</button>
+      <div class="detail-hero">
+        <img id="detail-photo" alt="" />
+        <div class="hero-veil"></div>
+        <div class="detail-hero-copy">
+          <p class="kicker" id="detail-kicker">Subscription</p>
+          <h1 id="detail-title"></h1>
+        </div>
+      </div>
+      <div class="detail-body">
+        <form id="detail-form" class="detail-form">
+          <label>
+            Monthly cost
+            <input name="cost" type="number" min="0" step="0.01" required />
+          </label>
+          <label>
+            Paid by
+            <select name="payer" required></select>
+          </label>
+          <fieldset>
+            <legend>Split with</legend>
+            <div class="chip-list" id="split-chips"></div>
+          </fieldset>
+          <div class="form-actions">
+            <button class="btn btn-ink" type="submit">Save split</button>
+            <button class="btn btn-ghost" type="button" data-delete-sub>
+              Remove
+            </button>
+          </div>
+        </form>
+        <aside class="detail-aside" id="detail-aside"></aside>
+      </div>
+    </section>
+
+    <dialog class="sheet" id="add-sub">
+      <form method="dialog" class="sheet-head">
+        <h3>New subscription</h3>
+        <button class="icon-close" value="cancel" aria-label="Close">×</button>
+      </form>
+      <form id="new-sub-form" class="sheet-body">
+        <label>
+          Name
+          <input name="name" type="text" placeholder="Disney+" required />
+        </label>
+        <label>
+          Monthly cost
+          <input name="cost" type="number" min="0" step="0.01" required />
+        </label>
+        <p class="field-label">Photograph</p>
+        <div class="photo-picks" id="photo-picks"></div>
+        <button class="btn btn-ink" type="submit">Add to library</button>
+      </form>
+    </dialog>
+
+    <dialog class="sheet auth-sheet" id="signup" aria-labelledby="signup-title">
+      <form method="dialog" class="sheet-head">
+        <div>
+          <p class="kicker ink">Make room for easier sharing</p>
+          <h3 id="signup-title">Create your account</h3>
+        </div>
+        <button class="icon-close" value="cancel" aria-label="Close">×</button>
+      </form>
+      <form class="sheet-body auth-form" id="signup-form">
+        <div class="signup-fields">
+          <label>
+            Your name
+            <input
+              name="name"
+              type="text"
+              autocomplete="name"
+              placeholder="Name"
+              required
+            />
+          </label>
+          <label>
+            Email address
+            <input
+              name="email"
+              type="email"
+              autocomplete="email"
+              placeholder="you@example.com"
+              required
+            />
+          </label>
+          <label>
+            Phone number
+            <input
+              name="phone"
+              type="tel"
+              autocomplete="tel"
+              placeholder="+44 7700 900000"
+              required
+            />
+          </label>
+          <label>
+            Password
+            <input
+              name="password"
+              type="password"
+              autocomplete="new-password"
+              minlength="8"
+              placeholder="At least 8 characters"
+              required
+            />
+          </label>
+          <button class="btn btn-ink auth-submit" type="submit">
+            Create account
+          </button>
+          <p class="auth-status" aria-live="polite"></p>
+          <p class="auth-switch">
+            Already sharing here?
+            <button type="button" data-switch-auth="login">Log in</button>
+          </p>
+        </div>
+      </form>
+      <form class="sheet-body auth-form verification-form" id="verify-email-form" hidden>
+        <p class="auth-intro">
+          Enter the six-digit code sent to <strong data-verification-email></strong>.
+        </p>
+        <label>
+          Email verification code
+          <input
+            name="token"
+            type="text"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            pattern="[0-9]{6}"
+            maxlength="6"
+            placeholder="123456"
+            required
+          />
+        </label>
+        <button class="auth-resend" type="button" data-resend-code>
+          Send a new code
+        </button>
+        <button class="btn btn-ink auth-submit" type="submit">
+          Verify email
+        </button>
+        <p class="auth-status" aria-live="polite"></p>
+      </form>
+    </dialog>
+
+    <dialog class="sheet auth-sheet" id="login" aria-labelledby="login-title">
+      <form method="dialog" class="sheet-head">
+        <div>
+          <p class="kicker ink">Welcome back</p>
+          <h3 id="login-title">Log in to Split</h3>
+        </div>
+        <button class="icon-close" value="cancel" aria-label="Close">×</button>
+      </form>
+      <form class="sheet-body auth-form" id="login-form">
+        <label>
+          Email address
+          <input
+            name="email"
+            type="email"
+            autocomplete="email"
+            placeholder="you@example.com"
+            required
+          />
+        </label>
+        <label>
+          Password
+          <input
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            placeholder="Your password"
+            required
+          />
+        </label>
+        <button class="btn btn-ink auth-submit" type="submit">Log in</button>
+        <p class="auth-status" aria-live="polite"></p>
+        <p class="auth-switch">
+          New to Split?
+          <button type="button" data-switch-auth="signup">Create an account</button>
+        </p>
+      </form>
+    </dialog>
+
+    <footer class="footer">
+      <p>Split</p>
+      <p>Black, white, foundry tan. Color lives in the photographs.</p>
+    </footer>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
